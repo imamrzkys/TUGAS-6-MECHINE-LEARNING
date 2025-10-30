@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediksi Penempatan Kerja Mahasiswa - Random Forest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: 
+                radial-gradient(circle at 15% 25%, #ec4899 0%, transparent 30%),
+                radial-gradient(circle at 85% 15%, #f472b6 0%, transparent 30%),
+                radial-gradient(circle at 45% 65%, #db2777 0%, transparent 35%),
+                radial-gradient(circle at 88% 85%, #f9a8d4 0%, transparent 25%),
+                radial-gradient(circle at 12% 88%, #be185d 0%, transparent 25%),
+                #e91e63;
+            background-attachment: fixed;
+            color: #2d3748;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+        }
+
+        .nav-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 1.1rem;
+            }
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                gap: 0.8rem;
+            }
+            .nav-links a {
+                font-size: 0.85rem;
+            }
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #4a5568;
+            font-weight: 500;
+            transition: all 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+        }
+
+        .nav-links a:hover {
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .hero {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem 0;
+            text-align: center;
+            margin: 2rem 1rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                margin: 1rem 0.5rem;
+                padding: 2rem 1rem;
+                border-radius: 15px;
+            }
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        .hero p {
+            font-size: 1rem;
+            color: #4a5568;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 768px) {
+            .hero p {
+                font-size: 0.9rem;
+            }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0 1rem 0;
+            padding: 0 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.8rem;
+                padding: 0 0.5rem;
+            }
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #fff, #f8f9fa);
+            padding: 1.5rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        @media (max-width: 768px) {
+            .stat-card {
+                padding: 1rem;
+            }
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+
+        .stat-card i {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .stat-card i {
+                font-size: 2rem;
+            }
+        }
+
+        .stat-card.purple { 
+            color: #ec4899;
+            border-color: #ec4899;
+        }
+        .stat-card.pink { 
+            color: #db2777;
+            border-color: #db2777;
+        }
+        .stat-card.blue { 
+            color: #f472b6;
+            border-color: #f472b6;
+        }
+        .stat-card.green { 
+            color: #be185d;
+            border-color: #be185d;
+        }
+
+        .stat-card h3 {
+            font-size: 1.8rem;
+            margin: 0.5rem 0;
+        }
+
+        .stat-card p {
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        .section {
+            padding: 2rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .section {
+                padding: 1.5rem 0;
+            }
+        }
+
+        .section-title {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #ffffff !important;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 768px) {
+            .section-title {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+        }
+
+        .prediction-form {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            margin: 0 1rem 2rem 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .prediction-form {
+                padding: 1.5rem 1rem;
+                margin: 0 0.5rem 1.5rem 0.5rem;
+                border-radius: 15px;
+            }
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1.2rem;
+            }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .form-group label i {
+            color: #ec4899;
+            font-size: 1rem;
+        }
+
+        .form-group small {
+            color: #718096;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+            font-weight: 400;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.9rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: #fff;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        @media (max-width: 768px) {
+            .form-group input,
+            .form-group select {
+                padding: 0.8rem;
+                font-size: 0.95rem;
+            }
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #ec4899;
+            box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group input::placeholder {
+            color: #a0aec0;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        @media (max-width: 768px) {
+            .btn {
+                padding: 0.9rem 1.8rem;
+                font-size: 0.95rem;
+                width: 100%;
+                margin-bottom: 0.8rem;
+            }
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(236, 72, 153, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(244, 114, 182, 0.4);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(244, 114, 182, 0.6);
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin: 2rem 1rem;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .result-card {
+                padding: 1.5rem;
+                margin: 1.5rem 0.5rem;
+            }
+        }
+
+        .result-card.show {
+            display: block;
+            animation: slideIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .result-badge {
+            display: inline-block;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            animation: bounce 0.6s ease;
+        }
+
+        @media (max-width: 768px) {
+            .result-badge {
+                padding: 0.8rem 2rem;
+                font-size: 1.4rem;
+            }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .result-badge.placed {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: #fff;
+        }
+
+        .result-badge.not-placed {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: #fff;
+        }
+
+        .confidence-bar {
+            background: #e2e8f0;
+            height: 40px;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 1rem 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .confidence-bar {
+                height: 35px;
+            }
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ec4899, #db2777, #be185d);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.1rem;
+            transition: width 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 2px 10px rgba(236, 72, 153, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .confidence-fill {
+                font-size: 0.95rem;
+            }
+        }
+
+        .visualizations {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 1rem;
+            padding: 0 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .visualizations {
+                grid-template-columns: 1fr;
+                gap: 1.2rem;
+                margin: 1.5rem 0.5rem;
+            }
+        }
+
+        .viz-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        @media (max-width: 768px) {
+            .viz-card {
+                padding: 1.2rem;
+            }
+        }
+
+        .viz-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            border-color: #ec4899;
+        }
+
+        .viz-card h3 {
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .viz-card h3 {
+                font-size: 1rem;
+            }
+        }
+
+        .viz-card img {
+            width: 100%;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .viz-card img:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-content img {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: -40px;
+            right: 0;
+            color: #fff;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #1a202c, #2d3748);
+            color: #fff;
+            text-align: center;
+            padding: 2.5rem 0;
+            margin-top: 3rem;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+        }
+
+        @media (max-width: 768px) {
+            .footer {
+                padding: 2rem 1rem;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .spinner {
+            border: 5px solid #f3f4f6;
+            border-top: 5px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        .help-text {
+            display: block;
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 0.3rem;
+            font-style: italic;
+        }
+
+        .form-section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin: 2rem 0 1rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid #ec4899;
+            background: linear-gradient(135deg, #ec4899, #be185d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @media (max-width: 768px) {
+            .form-section-title {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <i class="fas fa-graduation-cap"></i> Prediksi Penempatan Kerja
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#home">Beranda</a></li>
+                    <li><a href="#predict">Prediksi</a></li>
+                    <li><a href="#visualizations">Visualisasi</a></li>
+                    <li><a href="#about">Tentang</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero" id="home">
+        <div class="container">
+            <h1>Sistem Prediksi Penempatan Kerja Mahasiswa</h1>
+            <p>Prediksi status penempatan kerja mahasiswa menggunakan algoritma <strong>Random Forest</strong> berdasarkan faktor akademik dan non-akademik. Masukkan data mahasiswa untuk mendapatkan prediksi akurat dengan tingkat kepercayaan tinggi!</p>
+            
+            <div class="stats">
+                <div class="stat-card purple">
+                    <i class="fas fa-brain"></i>
+                    <h3>{{ "%.2f"|format(metadata.train_accuracy * 100) }}%</h3>
+                    <p>Akurasi Training</p>
+                </div>
+                <div class="stat-card pink">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>{{ "%.2f"|format(metadata.test_accuracy * 100) }}%</h3>
+                    <p>Akurasi Testing</p>
+                </div>
+                <div class="stat-card blue">
+                    <i class="fas fa-tree"></i>
+                    <h3>Random Forest</h3>
+                    <p>Algoritma</p>
+                </div>
+                <div class="stat-card green">
+                    <i class="fas fa-database"></i>
+                    <h3>{{ feature_names|length }}</h3>
+                    <p>Fitur Data</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="predict">
+        <div class="container">
+            <h2 class="section-title">Formulir Prediksi Penempatan Kerja</h2>
+            
+            <div class="prediction-form" style="margin-bottom: 1.5rem; padding: 1.5rem;">
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <p style="font-weight: 600; color: #ec4899; margin-bottom: 1rem;">
+                        <i class="fas fa-magic"></i> Coba Contoh Data Otomatis
+                    </p>
+                    <div style="display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap;">
+                        <button type="button" class="btn btn-primary" onclick="fillExample(1)" style="padding: 0.8rem 1.5rem;">
+                            <i class="fas fa-user"></i> Contoh 1: Diterima
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="fillExample(2)" style="padding: 0.8rem 1.5rem;">
+                            <i class="fas fa-user"></i> Contoh 2: Diterima
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="fillExample(3)" style="padding: 0.8rem 1.5rem;">
+                            <i class="fas fa-user"></i> Contoh 3: Diterima
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="fillExample(4)" style="padding: 0.8rem 1.5rem;">
+                            <i class="fas fa-user-times"></i> Contoh 4: Tidak Diterima
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="fillExample(5)" style="padding: 0.8rem 1.5rem;">
+                            <i class="fas fa-user-times"></i> Contoh 5: Tidak Diterima
+                        </button>
+                    </div>
+                    <small style="display: block; margin-top: 0.8rem; color: #718096;">
+                        Klik salah satu tombol untuk mengisi formulir secara otomatis dengan data contoh
+                    </small>
+                </div>
+            </div>
+            
+            <form class="prediction-form" id="predictionForm">
+                <div class="form-grid">
+                    <h3 class="form-section-title">📋 Data Pribadi</h3>
+                    
+                    <div class="form-group">
+                        <label for="sl_no"><i class="fas fa-hashtag"></i> Nomor Urut</label>
+                        <input type="number" id="sl_no" name="sl_no" placeholder="Contoh: 1" required>
+                        <small class="help-text">Masukkan nomor urut mahasiswa</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="gender"><i class="fas fa-venus-mars"></i> Jenis Kelamin</label>
+                        <select id="gender" name="gender" required>
+                            <option value="">-- Pilih Jenis Kelamin --</option>
+                            <option value="M">Laki-laki</option>
+                            <option value="F">Perempuan</option>
+                        </select>
+                    </div>
+                    
+                    <h3 class="form-section-title">🎓 Pendidikan Menengah (SMA/SMK)</h3>
+                    
+                    <div class="form-group">
+                        <label for="ssc_p"><i class="fas fa-percentage"></i> Nilai SSC (%)</label>
+                        <input type="number" step="0.01" id="ssc_p" name="ssc_p" placeholder="Contoh: 67.00" required>
+                        <small class="help-text">Persentase nilai Secondary School Certificate</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ssc_b"><i class="fas fa-school"></i> Dewan SSC</label>
+                        <select id="ssc_b" name="ssc_b" required>
+                            <option value="">-- Pilih Dewan --</option>
+                            <option value="Central">Central</option>
+                            <option value="Others">Others</option>
+                        </select>
+                        <small class="help-text">Dewan pendidikan SSC</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hsc_p"><i class="fas fa="percentage"></i> Nilai HSC (%)</label>
+                        <input type="number" step="0.01" id="hsc_p" name="hsc_p" placeholder="Contoh: 91.00" required>
+                        <small class="help-text">Persentase nilai Higher Secondary Certificate</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hsc_b"><i class="fas fa-school"></i> Dewan HSC</label>
+                        <select id="hsc_b" name="hsc_b" required>
+                            <option value="">-- Pilih Dewan --</option>
+                            <option value="Central">Central</option>
+                            <option value="Others">Others</option>
+                        </select>
+                        <small class="help-text">Dewan pendidikan HSC</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="hsc_s"><i class="fas fa-stream"></i> Jurusan HSC</label>
+                        <select id="hsc_s" name="hsc_s" required>
+                            <option value="">-- Pilih Jurusan --</option>
+                            <option value="Commerce">Commerce (Bisnis)</option>
+                            <option value="Science">Science (IPA)</option>
+                            <option value="Arts">Arts (IPS)</option>
+                        </select>
+                        <small class="help-text">Jurusan di tingkat HSC</small>
+                    </div>
+                    
+                    <h3 class="form-section-title">🎓 Pendidikan Sarjana (S1)</h3>
+                    
+                    <div class="form-group">
+                        <label for="degree_p"><i class="fas fa-percentage"></i> Nilai Sarjana (%)</label>
+                        <input type="number" step="0.01" id="degree_p" name="degree_p" placeholder="Contoh: 58.00" required>
+                        <small class="help-text">Persentase nilai sarjana/undergraduate</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="degree_t"><i class="fas fa-university"></i> Jenis Sarjana</label>
+                        <select id="degree_t" name="degree_t" required>
+                            <option value="">-- Pilih Jenis --</option>
+                            <option value="Sci&Tech">Sains & Teknologi</option>
+                            <option value="Comm&Mgmt">Bisnis & Manajemen</option>
+                            <option value="Others">Lainnya</option>
+                        </select>
+                        <small class="help-text">Bidang studi sarjana</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="workex"><i class="fas fa-briefcase"></i> Pengalaman Kerja</label>
+                        <select id="workex" name="workex" required>
+                            <option value="">-- Pilih --</option>
+                            <option value="Yes">Ya, Punya Pengalaman</option>
+                            <option value="No">Tidak Ada Pengalaman</option>
+                        </select>
+                        <small class="help-text">Apakah pernah bekerja sebelumnya?</small>
+                    </div>
+                    
+                    <h3 class="form-section-title">🎯 Tes & Pendidikan Lanjutan (MBA)</h3>
+                    
+                    <div class="form-group">
+                        <label for="etest_p"><i class="fas fa-clipboard-check"></i> Nilai Tes Kemampuan Kerja (%)</label>
+                        <input type="number" step="0.01" id="etest_p" name="etest_p" placeholder="Contoh: 55.0" required>
+                        <small class="help-text">Persentase employability test</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="specialisation"><i class="fas fa-graduation-cap"></i> Spesialisasi MBA</label>
+                        <select id="specialisation" name="specialisation" required>
+                            <option value="">-- Pilih Spesialisasi --</option>
+                            <option value="Mkt&HR">Marketing & HR</option>
+                            <option value="Mkt&Fin">Marketing & Finance</option>
+                        </select>
+                        <small class="help-text">Bidang spesialisasi MBA</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="mba_p"><i class="fas fa-percentage"></i> Nilai MBA (%)</label>
+                        <input type="number" step="0.01" id="mba_p" name="mba_p" placeholder="Contoh: 58.80" required>
+                        <small class="help-text">Persentase nilai MBA</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="salary"><i class="fas fa-money-bill-wave"></i> Gaji (Opsional)</label>
+                        <input type="number" step="0.01" id="salary" name="salary" placeholder="Contoh: 270000">
+                        <small class="help-text">Gaji yang diharapkan (dalam Rupiah)</small>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2.5rem; text-align: center;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-magic"></i> Prediksi Sekarang
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetForm()">
+                        <i class="fas fa-redo"></i> Reset Formulir
+                    </button>
+                </div>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 1rem; font-weight: 600; color: #ec4899;">Sedang menganalisis data...</p>
+            </div>
+
+            <div class="result-card" id="resultCard">
+                <div class="result-header">
+                    <div class="result-badge" id="resultBadge"></div>
+                    <h3 id="resultText"></h3>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" id="confidenceFill"></div>
+                    </div>
+                </div>
+                <div id="probabilitiesDiv"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="visualizations">
+        <div class="container">
+            <h2 class="section-title">Visualisasi Model & Analisis Data</h2>
+            <div class="visualizations">
+                {% for image in images %}
+                <div class="viz-card">
+                    <h3>{{ image_titles.get(image, image.replace('.png', '').replace('-', ' ').title()) }}</h3>
+                    <img src="{{ url_for('static', filename=image) }}" alt="{{ image_titles.get(image, image) }}" onclick="openModal(this.src)">
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="about">
+        <div class="container">
+            <h2 class="section-title">Tentang Sistem Ini</h2>
+            <div class="prediction-form">
+                <p style="text-align: center; font-size: 1.05rem; line-height: 2; color: #2d3748;">
+                    Sistem prediksi penempatan kerja mahasiswa ini menggunakan algoritma <strong style="color: #ec4899;">Random Forest</strong> 
+                    untuk memprediksi apakah seorang mahasiswa akan mendapatkan penempatan kerja atau tidak berdasarkan berbagai faktor 
+                    akademik dan non-akademik.
+                </p>
+                <p style="text-align: center; font-size: 1.05rem; line-height: 2; color: #2d3748; margin-top: 1rem;">
+                    Model ini telah dilatih dengan <strong style="color: #ec4899;">akurasi tinggi</strong> dan siap membantu 
+                    institusi pendidikan dalam menganalisis peluang penempatan kerja mahasiswa secara cepat dan akurat!
+                </p>
+                <div style="margin-top: 2.5rem; padding: 1.5rem; background: linear-gradient(135deg, #f0f9ff, #fce7f3); border-radius: 15px; text-align: center;">
+                    <p style="font-size: 1.1rem; font-weight: 600; color: #1a202c; margin-bottom: 1rem;">Informasi Model:</p>
+                    <p style="margin: 0.5rem 0;"><strong>Algoritma:</strong> {{ metadata.algorithm }}</p>
+                    <p style="margin: 0.5rem 0;"><strong>Random State:</strong> {{ metadata.random_state }}</p>
+                    <p style="margin: 0.5rem 0;"><strong>Akurasi Training:</strong> {{ "%.2f"|format(metadata.train_accuracy * 100) }}%</p>
+                    <p style="margin: 0.5rem 0;"><strong>Akurasi Testing:</strong> {{ "%.2f"|format(metadata.test_accuracy * 100) }}%</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="modal" id="imageModal" onclick="closeModal()">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <img id="modalImage" src="" alt="Tampilan diperbesar">
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p style="font-size: 1.05rem;">&copy; 2025 Sistem Prediksi Penempatan Kerja Mahasiswa</p>
+            <p style="margin-top: 0.8rem; font-size: 0.95rem;">
+                Dibuat oleh <strong>Imam Rizki Syahputra</strong>
+            </p>
+            <p style="margin-top: 0.5rem; font-size: 0.9rem; opacity: 0.9;">
+                Dibuat dengan dedikasi untuk Machine Learning
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        const form = document.getElementById('predictionForm');
+        const loading = document.getElementById('loading');
+        const resultCard = document.getElementById('resultCard');
+
+        // Data contoh dari dataset (5 serial number berbeda dari data asli)
+        const exampleData = {
+            1: { // Contoh 1: Serial #15 - Placed (High scores)
+                sl_no: 15,
+                gender: 'M',
+                ssc_p: 67.00,
+                ssc_b: 'Others',
+                hsc_p: 91.00,
+                hsc_b: 'Others',
+                hsc_s: 'Commerce',
+                degree_p: 58.00,
+                degree_t: 'Sci&Tech',
+                workex: 'No',
+                etest_p: 55.0,
+                specialisation: 'Mkt&HR',
+                mba_p: 58.80,
+                salary: 270000
+            },
+            2: { // Contoh 2: Serial #28 - Placed (Very high scores with experience)
+                sl_no: 28,
+                gender: 'M',
+                ssc_p: 79.33,
+                ssc_b: 'Central',
+                hsc_p: 78.33,
+                hsc_b: 'Others',
+                hsc_s: 'Science',
+                degree_p: 77.48,
+                degree_t: 'Sci&Tech',
+                workex: 'Yes',
+                etest_p: 86.5,
+                specialisation: 'Mkt&Fin',
+                mba_p: 66.28,
+                salary: 200000
+            },
+            3: { // Contoh 3: Serial #42 - Placed (Excellent scores)
+                sl_no: 42,
+                gender: 'M',
+                ssc_p: 85.80,
+                ssc_b: 'Central',
+                hsc_p: 73.60,
+                hsc_b: 'Central',
+                hsc_s: 'Commerce',
+                degree_p: 73.30,
+                degree_t: 'Comm&Mgmt',
+                workex: 'No',
+                etest_p: 96.8,
+                specialisation: 'Mkt&Fin',
+                mba_p: 55.50,
+                salary: 425000
+            },
+            4: { // Contoh 4: Serial #56 - Not Placed (Low scores)
+                sl_no: 56,
+                gender: 'M',
+                ssc_p: 56.00,
+                ssc_b: 'Central',
+                hsc_p: 52.00,
+                hsc_b: 'Central',
+                hsc_s: 'Science',
+                degree_p: 52.00,
+                degree_t: 'Sci&Tech',
+                workex: 'No',
+                etest_p: 66.0,
+                specialisation: 'Mkt&HR',
+                mba_p: 59.43,
+                salary: ''
+            },
+            5: { // Contoh 5: Serial #73 - Not Placed (Low scores, female)
+                sl_no: 73,
+                gender: 'F',
+                ssc_p: 46.00,
+                ssc_b: 'Others',
+                hsc_p: 49.20,
+                hsc_b: 'Others',
+                hsc_s: 'Commerce',
+                degree_p: 79.00,
+                degree_t: 'Comm&Mgmt',
+                workex: 'No',
+                etest_p: 74.28,
+                specialisation: 'Mkt&Fin',
+                mba_p: 53.29,
+                salary: ''
+            }
+        };
+
+        function fillExample(exampleNumber) {
+            const data = exampleData[exampleNumber];
+            if (!data) return;
+
+            // Fill all form fields
+            document.getElementById('sl_no').value = data.sl_no;
+            document.getElementById('gender').value = data.gender;
+            document.getElementById('ssc_p').value = data.ssc_p;
+            document.getElementById('ssc_b').value = data.ssc_b;
+            document.getElementById('hsc_p').value = data.hsc_p;
+            document.getElementById('hsc_b').value = data.hsc_b;
+            document.getElementById('hsc_s').value = data.hsc_s;
+            document.getElementById('degree_p').value = data.degree_p;
+            document.getElementById('degree_t').value = data.degree_t;
+            document.getElementById('workex').value = data.workex;
+            document.getElementById('etest_p').value = data.etest_p;
+            document.getElementById('specialisation').value = data.specialisation;
+            document.getElementById('mba_p').value = data.mba_p;
+            document.getElementById('salary').value = data.salary;
+
+            // Scroll to form
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Show notification
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: linear-gradient(135deg, #10b981, #34d399);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+                z-index: 9999;
+                animation: slideInRight 0.5s ease;
+                font-weight: 600;
+            `;
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> Data Contoh ${exampleNumber} Berhasil Dimuat!`;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.5s ease';
+                setTimeout(() => notification.remove(), 500);
+            }, 2500);
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            loading.style.display = 'block';
+            resultCard.classList.remove('show');
+            
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                loading.style.display = 'none';
+                
+                if (result.success) {
+                    displayResult(result);
+                } else {
+                    alert('❌ Terjadi kesalahan: ' + result.error);
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                alert('❌ Gagal melakukan prediksi: ' + error.message);
+            }
+        });
+
+        function displayResult(result) {
+            const badge = document.getElementById('resultBadge');
+            const text = document.getElementById('resultText');
+            const fill = document.getElementById('confidenceFill');
+            const probDiv = document.getElementById('probabilitiesDiv');
+            
+            badge.textContent = result.prediction;
+            badge.className = 'result-badge ' + (result.prediction === 'Placed' ? 'placed' : 'not-placed');
+            
+            text.textContent = `Tingkat Kepercayaan: ${result.confidence}%`;
+            fill.style.width = result.confidence + '%';
+            fill.textContent = result.confidence + '%';
+            
+            let probHtml = '<h3 style="margin-top: 2rem; text-align: center; background: linear-gradient(135deg, #667eea, #764ba2); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700;">📊 Probabilitas Per Kelas</h3><div class="form-grid" style="margin-top: 1rem;">';
+            for (const [className, prob] of Object.entries(result.probabilities)) {
+                const displayName = className === 'Placed' ? '✅ Diterima Kerja' : '❌ Tidak Diterima';
+                probHtml += `
+                    <div class="stat-card ${className === 'Placed' ? 'green' : 'pink'}">
+                        <h3>${prob}%</h3>
+                        <p>${displayName}</p>
+                    </div>
+                `;
+            }
+            probHtml += '</div>';
+            probDiv.innerHTML = probHtml;
+            
+            resultCard.classList.add('show');
+            resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function resetForm() {
+            form.reset();
+            resultCard.classList.remove('show');
+        }
+
+        function openModal(src) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            modal.classList.add('show');
+            modalImg.src = src;
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+        }
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
